@@ -113,7 +113,7 @@ def get_decoded_files(recon_dir, listsub, n_subjects_to_display):
         decoded_files = [os.path.join(recon_dir, f"{sub}_decoded.npy") for sub in listsub]
     else:
         print("No list of subjects provided, taking random subjects.")
-        decoded_files = glob.glob(os.path.join(recon_dir, "sub-*_decoded.npy"))
+        decoded_files = glob.glob(os.path.join(recon_dir, "*_decoded.npy"))
 
         if not decoded_files:
             raise FileNotFoundError(f"No decoded files found in {recon_dir}")
@@ -126,7 +126,7 @@ def get_decoded_files(recon_dir, listsub, n_subjects_to_display):
 
 
 def plot_ana(recon_dir, n_subjects_to_display, loss_name, listsub,
-             dataset="UkBioBank40", region="S.T.s.br.", side="L"):
+             dataset="UkBioBank40", region="S.T.s.br.", side="L", crops=None):
     """
     Display pairs of input and decoded volumes in Anatomist,
     side-by-side for each subject.
@@ -161,25 +161,7 @@ def plot_ana(recon_dir, n_subjects_to_display, loss_name, listsub,
     for i, decoded_path in enumerate(decoded_files):
         subject_id = os.path.basename(decoded_path).split('_decoded')[0]
 
-        # ---- Load input file ----
-        input_path = os.path.join(recon_dir, f"{subject_id}_input.npy")
-        if not os.path.isfile(input_path):
-            print(f"Local input file missing for {subject_id}, searching in original dataset...")
-            mm_skeleton_path = f"/neurospin/dico/data/deep_folding/current/datasets/{dataset}/crops/2mm/{region}/mask/{side}crops"
-            input_path = os.path.join(mm_skeleton_path, f"{subject_id}_cropped_skeleton.nii.gz")
-
-        try:
-            input_path = ensure_nii_exists(input_path)
-            dic_windows[f'r_input_{i}'] = load_and_prepare_volume(
-                a, input_path, referential
-            )
-            dic_windows[f'w_input_{i}'] = a.createWindow('3D', block=block)
-            dic_windows[f'w_input_{i}'].addObjects([dic_windows[f'r_input_{i}']])
-        except FileNotFoundError:
-            print(f"ERROR: Input file not found for {subject_id}. Skipping.")
-            continue
-
-        # ---- Load decoded file ----
+                # ---- Load decoded file ----
         try:
             decoded_path = ensure_nii_exists(decoded_path)
             dic_windows[f'r_decoded_{i}'] = load_and_prepare_volume(
@@ -192,6 +174,27 @@ def plot_ana(recon_dir, n_subjects_to_display, loss_name, listsub,
             dic_windows[f'w_decoded_{i}'].addObjects([dic_windows[f'r_decoded_{i}']])
         except FileNotFoundError:
             print(f"ERROR: Decoded file not found for {subject_id}. Skipping.")
+            continue
+
+        # ---- Load input file ----
+        input_path = os.path.join(recon_dir, f"{subject_id}_input.npy")
+        if not os.path.isfile(input_path):
+            print(f"Local input file missing for {subject_id}, searching in original dataset...")
+            if crops:
+                mm_skeleton_path = crops
+            else:
+                mm_skeleton_path = f"/neurospin/dico/data/deep_folding/current/datasets/{dataset}/crops/2mm/{region}/mask/{side}crops"
+            input_path = os.path.join(mm_skeleton_path, f"{subject_id}_cropped_skeleton.nii.gz")
+
+        try:
+            input_path = ensure_nii_exists(input_path)
+            dic_windows[f'r_input_{i}'] = load_and_prepare_volume(
+                a, input_path, referential
+            )
+            dic_windows[f'w_input_{i}'] = a.createWindow('3D', block=block)
+            dic_windows[f'w_input_{i}'].addObjects([dic_windows[f'r_input_{i}']])
+        except FileNotFoundError:
+            print(f"ERROR: Input file not found for {subject_id}. Skipping.")
             continue
 
     print("All subjects loaded and displayed successfully.")
@@ -207,21 +210,27 @@ def main():
     parser.add_argument('-s', '--subjects', type=str, default=None,
                         help="Comma-separated list of subject IDs to plot (e.g., sub-1110622,sub-1150302).")
     parser.add_argument('-n', '--nsubjects', type=int, default=4, help="Number of subjects to plot.")
+    parser.add_argument('-c', '--crops', type=str, default=None, help='Path to the crops of the input data.')
 
     args = parser.parse_args()
     subjects = args.subjects.split(',') if args.subjects else None
 
-    if not os.path.isdir(args.path):
-        raise FileNotFoundError(f"Provided path not found: {args.path}")
+    folder_name = args.path
 
-    region_name, side, loss = load_configs(args.path)
+    if not os.path.isdir(folder_name):
+        raise FileNotFoundError(f"Provided path not found: {folder_name}")
+    
+    if folder_name.endswith('/'):
+        folder_name = folder_name.replace('/', '')
+    region_name, side, loss = load_configs(folder_name)
 
-    plot_ana(recon_dir=args.path,
+    plot_ana(recon_dir=folder_name,
             n_subjects_to_display=args.nsubjects,
             listsub=subjects, 
             region = region_name, 
             side = side,
-            loss_name=loss)
+            loss_name=loss,
+            crops=args.crops)
 
 
 if __name__ == "__main__":

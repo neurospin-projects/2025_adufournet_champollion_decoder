@@ -148,6 +148,8 @@ decodervenv/
 # Runs for tensorboard
 runs/
 
+# Pixi
+main_pixi/
 
 # Spyder project settings
 .spyderproject
