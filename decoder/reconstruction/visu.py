@@ -40,10 +40,19 @@ def load_configs(path: str):
     Load decoder config and corresponding encoder config.
     """
     path = os.path.dirname(path)
+
     encoder_config_path = os.path.join(path,'.hydra', 'encoder_config.yaml')
-    encoder_cfg = simple_yaml_loader(encoder_config_path)
+    if not os.path.exists(encoder_config_path):
+        print("No encoder_config.yaml found at: ", encoder_config_path)
+    else:
+        encoder_cfg = simple_yaml_loader(encoder_config_path)
+
     decoder_config_path = os.path.join(path,'.hydra', 'decoder_config.yaml')
+    if not os.path.exists(decoder_config_path):
+        print("No decoder_config.yaml found at: ", decoder_config_path)
+        return None
     decoder_cfg = simple_yaml_loader(decoder_config_path)
+
     loss = decoder_cfg['loss']
     region_name, mask, side_skeleton = (encoder_cfg['numpy_all']).split('/')[-3:]
     print(region_name, mask, side_skeleton)
@@ -222,15 +231,23 @@ def main():
     
     if folder_name.endswith('/'):
         folder_name = folder_name.replace('/', '')
-    region_name, side, loss = load_configs(folder_name)
 
-    plot_ana(recon_dir=folder_name,
+    if load_configs(folder_name) is not None:
+        region_name, side, loss = load_configs(folder_name)
+        plot_ana(recon_dir=folder_name,
             n_subjects_to_display=args.nsubjects,
             listsub=subjects, 
             region = region_name, 
             side = side,
             loss_name=loss,
             crops=args.crops)
+    else:
+        plot_ana(recon_dir=folder_name,
+            n_subjects_to_display=args.nsubjects,
+            listsub=subjects, 
+            loss_name='bce',
+            crops=args.crops)
+
 
 
 if __name__ == "__main__":
