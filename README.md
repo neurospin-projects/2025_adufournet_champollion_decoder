@@ -3,6 +3,19 @@
 ```bash
 git clone https://github.com/Dufouranto0/2025_Champollion_Decoder.git
 cd 2025_Champollion_Decoder
+```
+
+## Run the pixi env
+
+```bash
+cd pixi
+pixi shell
+cd ..
+```
+
+### Previous env
+
+```bash
 python -m venv decodervenv
 . decodervenv/bin/activate
 pip install -r requirements.txt
@@ -16,10 +29,8 @@ Also make sure that by concatenating `model_to_decode_path` and `train_csv`, you
 
 The `val_test_csv` corresponds to embeddings containing subjects used for **validation** in the encoder training.
 
-Then run:
-
+Then run (inside the folder `2025_Champollion_Decoder`):
 ```bash
-cd 2025_Champollion_Decoder
 python3 -m decoder.train
 ```
 ---
@@ -29,8 +40,8 @@ python3 -m decoder.train
 If you want to decode subjects, with a known model (already trained), use `decode_subjects.py`.
 `decode_subjects.py` takes as argument the path the the trained model folder (-p), the list of subjects (-s), the path to the embeddings file (-e) and the name of the ID column in the embeddings file (-c):
 
+Run (inside the folder `2025_Champollion_Decoder`):
 ```bash
-cd 2025_Champollion_Decoder
 python3 -m decoder.reconstruction.decode_subjects \
                        -p runs/Champollion_V1_after_ablation_256/23_SC-sylv_left_bce_0.0005 \
                        -s sub-1000021,sub-1000325,sub-1000575,sub-1000606 \
@@ -46,8 +57,8 @@ python3 -m decoder.reconstruction.decode_subjects \
 If you want to decode all the subjects fom the train, val and test sets, with a known model (already trained), use `decode_train_val_test.py`.
 `decode_train_val_test.py` takes as argument the path the the trained model folder (-p), the split you want to work on (--split), the kind of subjects you want to save regarding the loss function (i.e. the reconstruciton error), the best reconstructed subjects or the worst (-m), the number of reconstruction to save regarding this criteria (-n), and finaly a possibility to compute the smoothed score per voxel for each subject, regarding the distribution of error in each split, so as to find outliers (--outliers):
 
+Run (inside the folder `2025_Champollion_Decoder`):
 ```bash
-cd 2025_Champollion_Decoder
 python3 -m decoder.reconstruction.decode_train_val_test \
                           -p runs/1_STs_left_bce_0.0005 \
                           -m worst \
@@ -59,13 +70,13 @@ python3 -m decoder.reconstruction.decode_train_val_test \
 
 ## Comparing encoder input with decoder output
 
-To compare the initial encoder input (in black and white in the example below) with the decoder output (in orange in the example below), you also need a BrainVisa environment.
+To compare the initial encoder input (in black and white in the example below) with the decoder output (in orange in the example below), you also need a BrainVisa environment. It is now included in the pixi env. Otherwise, if you are still with the previous venv, use bv bash after you have downloaded brainvisa.
+
 `visu.py` takes the parent folder of the .npy files generated with `decode_subjects.py` or `decode_train_val_test.py`, the loss function that was used during the training and a potential list of subject ids.
 If no loss is provided, then bce is used by default, if no list of subjects is provided, 4 subjects among the .npy files will be randomly picked up.
 
+Run (inside the folder `2025_Champollion_Decoder`):
 ```bash
-bv bash
-cd 2025_Champollion_Decoder
 python3 decoder/reconstruction/visu.py \
   -p decoder/example \
   -s sub-1110622,sub-1150302
@@ -89,11 +100,11 @@ The higher the probability, the redder the voxel appears. The lower the probabil
 
 ## Saving NIfTI files from decoder outputs
 
-If you want to save NIfTI files from the NumPy outputs of the decoder, use `save_nii.py` inside a BrainVisa environment (or any environment that contains `aims`).
+If you want to save NIfTI files from the NumPy outputs of the decoder, use `save_nii.py` inside a BrainVisa environment (bv bash) (or any environment that contains `aims`).
+Note that it is now included in the pixi env.
 `save_nii.py` takes the parent folder of the generated .npy files as argument:
 
 ```bash
-bv bash
 cd 2025_Champollion_Decoder/decoder
 python3 reconstruction/save_nii.py -p example
 ```
