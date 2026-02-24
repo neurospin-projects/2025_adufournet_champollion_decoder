@@ -1,7 +1,7 @@
 ## Champollion-Decoder
 
 ```bash
-git clone https://github.com/Dufouranto0/2025_Champollion_Decoder.git
+git clone https://github.com/neurospin-projects/2025_adufournet_champollion_decoder.git
 cd 2025_Champollion_Decoder
 ```
 
