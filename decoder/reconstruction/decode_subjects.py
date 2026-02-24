@@ -1,6 +1,8 @@
 # decode_subjects.py
 
 """
+Problem with the subject ID column type. It is int for HCP subjects and string for UKB subjects.
+To FIX !
 Example:
 cd 2025_Champollion_Decoder
 
@@ -30,7 +32,7 @@ def main():
     parser = argparse.ArgumentParser(description="Decode subjects with best model")
     parser.add_argument("-p", "--path", required=True,
                         help="Path to run folder (e.g. runs/57_fronto-parietal_medial_face_left_bce_0.0005)")
-    parser.add_argument("-s", "--subjects", default=None,
+    parser.add_argument("-s", "--subjects",  nargs="+", default=None, type=str,
                         help="List of subject IDs to decode, separated with a ,")
     parser.add_argument("-e", "--embeddings", required=True,
                         help="Path to the embeddings file")
@@ -60,9 +62,8 @@ def main():
     subj_ID = args.IDcolumnName
     if subj_ID not in list(df.columns):
         raise ValueError(f"The column {subj_ID} is not found in {embeddings_csv}")
-
     if args.subjects:
-        df = df[df[subj_ID].isin(args.subjects.split(','))]
+        df = df[df[subj_ID].isin(args.subjects[0].split(','))] # .isin(args.subjects.split(','))] #.isin(args.subjects)
     if df.empty:
         raise ValueError("No embeddings found for given subjects!")
 
