@@ -69,20 +69,27 @@ def infer_shapes(dm: DataModule_Learning, decoder_cfg, encoder_cfg):
     return latent_dim, output_shape, filters, region
 
 
-def get_next_exp_number(runs_dir="runs"):
-    os.makedirs(runs_dir, exist_ok=True)  # make sure folder exists
-    exp_folders = [f for f in os.listdir(runs_dir) if os.path.isdir(os.path.join(runs_dir, f))]
-    
+def get_next_exp_number(region_dir):
+    os.makedirs(region_dir, exist_ok=True)
+
+    region_name = os.path.basename(region_dir)
+
+    exp_folders = [
+        f for f in os.listdir(region_dir)
+        if os.path.isdir(os.path.join(region_dir, f))
+    ]
+
     numbers = []
     for folder in exp_folders:
-        match = re.match(r"^(\d+)", folder)  # match leading digits
+        # match region_XX where XX is a number at the end
+        match = re.match(rf"^{re.escape(region_name)}_(\d+)$", folder)
         if match:
             numbers.append(int(match.group(1)))
-    
+
     if numbers:
         return max(numbers) + 1
     else:
-        return 1  # if no experiment exists yet
+        return 1
 
 
 def main():
@@ -130,8 +137,8 @@ def main():
     # Example: PROJECT_ROOT + "runs" → "2025_Champollion_Decoder/runs"
     os.makedirs(base_out_dir, exist_ok=True)
 
-    nb_exp = get_next_exp_number(base_out_dir)
-    experiment_name = f"{nb_exp}_{region}_{loss}_{decoder_cfg.learning_rate}"
+    nb_exp = get_next_exp_number(os.path.join(base_out_dir, region))
+    experiment_name = f"{region}_{nb_exp}"
     out_dir = os.path.join(base_out_dir, experiment_name)
     
     os.makedirs(out_dir, exist_ok=True)
