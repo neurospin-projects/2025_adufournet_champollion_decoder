@@ -2,11 +2,10 @@
 """
 bv bash
 
-cd 2025_Champollion_Decoder/decoder
+cd 2025_Champollion_Decoder
 
-python3 reconstruction/visu.py \
-  -p example \
-  -l bce \
+python3 decoder/reconstruction/visu.py \
+  -p decoder/example \
   -s sub-1110622,sub-1150302
 """
 
@@ -15,6 +14,7 @@ from soma.qt_gui.qt_backend import Qt
 from soma import aims
 import numpy as np
 import argparse
+import json
 import os
 import glob
 
@@ -111,6 +111,103 @@ def load_and_prepare_volume(anatomist, file_path, referential, palette=None, min
     fusion.assignReferential(referential)
     return fusion
 
+# ===========================
+# Camera Utilities
+# ===========================
+
+def print_camera_infos(window):
+    """
+    Print quaternion and zoom information of an Anatomist window.
+    """
+    try:
+        info = window.getInfos()
+        quat = info.get('view_quaternion', None)
+        zoom = info.get('zoom', None)
+        print("---- Camera Infos ----")
+        print(f"Quaternion : {quat}")
+        print(f"Zoom       : {zoom}")
+        print("----------------------")
+    except Exception as e:
+        print(f"Error while accessing window camera info: {e}")
+
+# ===========================
+# Snapshot Utilities
+# ===========================
+
+def snapshot_all(subjects, side, region, save_dir):
+    """
+    Save snapshots of input and decoded windows.
+    """
+    os.makedirs(save_dir, exist_ok=True)
+
+    image_files = []
+
+    for i, subject in enumerate(subjects):
+
+        w_decoded_key = f'w_decoded_{i}'
+        w_input_key   = f'w_input_{i}'
+
+        if w_decoded_key not in dic_windows or w_input_key not in dic_windows:
+            print(f"Skipping {subject}: window not found.")
+            continue
+
+        # Disable cursor
+        dic_windows[w_decoded_key].setHasCursor(0)
+        dic_windows[w_input_key].setHasCursor(0)
+
+        # Save decoded
+        recon_fname = f"{subject}_{region}_{side}_decoded.png"
+        recon_img_path = os.path.join(save_dir, recon_fname)
+        dic_windows[w_decoded_key].snapshot(recon_img_path, width=1200, height=900)
+
+        # Save input
+        init_fname = f"{subject}_{region}_{side}_input.png"
+        init_img_path = os.path.join(save_dir, init_fname)
+        dic_windows[w_input_key].snapshot(init_img_path, width=1200, height=900)
+
+        image_files.append(init_img_path)
+        image_files.append(recon_img_path)
+
+        print(f"Saved snapshots for {subject}")
+
+    return image_files
+
+def run_visualization(folder_name, subjects=None, nsubjects=4, crops=None):
+    """
+    Programmatic entry point for visualization (no CLI).
+    """
+    global a, block, dic_windows
+
+    a = ana.Anatomist()
+    nb_columns = 2
+    block = a.createWindowsBlock(nb_columns)
+    dic_windows = {}
+
+    if load_configs(folder_name) is not None:
+        region_name, side, loss = load_configs(folder_name)
+        plot_ana(
+            recon_dir=folder_name,
+            n_subjects_to_display=nsubjects,
+            listsub=subjects,
+            region=region_name,
+            side=side,
+            loss_name=loss,
+            crops=crops
+        )
+    else:
+        plot_ana(
+            recon_dir=folder_name,
+            n_subjects_to_display=nsubjects,
+            listsub=subjects,
+            loss_name='bce',
+            crops=crops
+        )
+
+    # Keep GUI open
+    qt_app = Qt.QApplication.instance()
+    if qt_app is not None:
+        qt_app.exec_()
+
 
 # ===========================
 # Core Logic
@@ -135,7 +232,8 @@ def get_decoded_files(recon_dir, listsub, n_subjects_to_display):
 
 
 def plot_ana(recon_dir, n_subjects_to_display, loss_name, listsub,
-             dataset="UkBioBank40", region="S.T.s.br.", side="L", crops=None):
+             dataset="UkBioBank40", region="S.T.s.br.", side="L", crops=None, 
+             region_views={}):
     """
     Display pairs of input and decoded volumes in Anatomist,
     side-by-side for each subject.
@@ -170,7 +268,7 @@ def plot_ana(recon_dir, n_subjects_to_display, loss_name, listsub,
     for i, decoded_path in enumerate(decoded_files):
         subject_id = os.path.basename(decoded_path).split('_decoded')[0]
 
-                # ---- Load decoded file ----
+        # ---- Load decoded file ----
         try:
             decoded_path = ensure_nii_exists(decoded_path)
             dic_windows[f'r_decoded_{i}'] = load_and_prepare_volume(
@@ -181,6 +279,17 @@ def plot_ana(recon_dir, n_subjects_to_display, loss_name, listsub,
             )
             dic_windows[f'w_decoded_{i}'] = a.createWindow('3D', block=block)
             dic_windows[f'w_decoded_{i}'].addObjects([dic_windows[f'r_decoded_{i}']])
+
+            region_view = region_views.get(region, None)
+            if region_views and side in region_view:
+                camera_view = region_view[side]["camera_view"]
+            else:
+                camera_view = None
+            if camera_view:
+                dic_windows[f'w_decoded_{i}'].camera(view_quaternion=camera_view)
+            else :
+                print('No camera view provided for this region')
+
         except FileNotFoundError:
             print(f"ERROR: Decoded file not found for {subject_id}. Skipping.")
             continue
@@ -202,6 +311,14 @@ def plot_ana(recon_dir, n_subjects_to_display, loss_name, listsub,
             )
             dic_windows[f'w_input_{i}'] = a.createWindow('3D', block=block)
             dic_windows[f'w_input_{i}'].addObjects([dic_windows[f'r_input_{i}']])
+            region_view = region_views.get(region, None)
+            if region_view and side in region_view:
+                camera_view = region_view[side]["camera_view"]
+            else:
+                camera_view = None
+            if camera_view:
+                dic_windows[f'w_input_{i}'].camera(view_quaternion=camera_view)
+
         except FileNotFoundError:
             print(f"ERROR: Input file not found for {subject_id}. Skipping.")
             continue
@@ -221,6 +338,10 @@ def main():
     parser.add_argument('-n', '--nsubjects', type=int, default=4, help="Number of subjects to plot.")
     parser.add_argument('-c', '--crops', type=str, default=None, help='Path to the crops of the input data.')
 
+    parser.add_argument('--dataset', type=str, default=None, help='Path to the dataset for fallback')
+    parser.add_argument('--snapshot', type=bool, default=False, help='If you want to automaticaly have the snapshots.')
+    parser.add_argument('--savedir', type=str, default=False, help='Save directory for the snapshots.')
+
     args = parser.parse_args()
     subjects = args.subjects.split(',') if args.subjects else None
 
@@ -232,21 +353,45 @@ def main():
     if folder_name.endswith('/'):
         folder_name = folder_name.replace('/', '')
 
+    SNAPSHOT = args.snapshot
+    SAVEDIR = args.savedir
+
+    if args.dataset is not None:
+        DATASET = args.dataset
+    else: 
+        DATASET = "UkBioBank40"
+
+    # ===========================
+    # Region-based camera views
+    # ===========================
+    with open("/neurospin/dico/adufournet/2025_Champollion_Decoder/decoder/reconstruction/region_views.json", "r") as f:
+        REGION_VIEWS = json.load(f)
+
     if load_configs(folder_name) is not None:
         region_name, side, loss = load_configs(folder_name)
         plot_ana(recon_dir=folder_name,
             n_subjects_to_display=args.nsubjects,
             listsub=subjects, 
-            region = region_name, 
-            side = side,
+            region=region_name, 
+            side=side,
             loss_name=loss,
-            crops=args.crops)
+            crops=args.crops,
+            region_views=REGION_VIEWS, 
+            dataset=DATASET)
     else:
         plot_ana(recon_dir=folder_name,
             n_subjects_to_display=args.nsubjects,
             listsub=subjects, 
             loss_name='bce',
             crops=args.crops)
+    
+    print(subjects)
+    print(side)
+    print(SAVEDIR)
+
+    if SNAPSHOT:
+        snapshot_all(subjects=subjects, side=side, region=region_name, save_dir=SAVEDIR)
+
 
 
 
@@ -255,10 +400,8 @@ if __name__ == "__main__":
     nb_columns = 2
     block = a.createWindowsBlock(nb_columns)
     dic_windows = {}
-
     main()
 
-    # Keep GUI open
     qt_app = Qt.QApplication.instance()
     if qt_app is not None:
         qt_app.exec_()
