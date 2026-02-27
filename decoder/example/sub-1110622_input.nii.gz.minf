@@ -1,10 +1,11 @@
 attributes = {
     'volume_dimension' : [ 18, 41, 38, 1 ],
+    'referential' : 'f1870588-1325-11f1-95d6-d89ef3149bd7',
+    'voxel_size' : [ 2, 2, 2, 1 ],
     'sizeX' : 18,
     'sizeY' : 41,
     'sizeZ' : 38,
     'sizeT' : 1,
-    'voxel_size' : [ 2, 2, 2 ],
     'disk_data_type' : 'S16',
     'scale_factor_applied' : 1,
     'scale_factor' : 1,
