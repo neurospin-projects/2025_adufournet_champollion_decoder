@@ -147,28 +147,25 @@ def snapshot_all(subjects, side, region, save_dir):
         w_decoded_key = f'w_decoded_{i}'
         w_input_key   = f'w_input_{i}'
 
-        if w_decoded_key not in dic_windows or w_input_key not in dic_windows:
-            print(f"Skipping {subject}: window not found.")
-            continue
+        list_w_sub_io = [w_decoded_key, w_input_key]
 
-        # Disable cursor
-        dic_windows[w_decoded_key].setHasCursor(0)
-        dic_windows[w_input_key].setHasCursor(0)
+        for w_sub in list_w_sub_io:
 
-        # Save decoded
-        recon_fname = f"{subject}_{region}_{side}_decoded.png"
-        recon_img_path = os.path.join(save_dir, recon_fname)
-        dic_windows[w_decoded_key].snapshot(recon_img_path, width=1200, height=900)
+            if w_sub not in dic_windows :
+                print(f"Skipping {subject} {w_sub}: window not found.")
 
-        # Save input
-        init_fname = f"{subject}_{region}_{side}_input.png"
-        init_img_path = os.path.join(save_dir, init_fname)
-        dic_windows[w_input_key].snapshot(init_img_path, width=1200, height=900)
+            else :
+                # Disable cursor
+                dic_windows[w_sub].setHasCursor(0)
+                end = w_sub.split('_')[1]
+                # Save decoded
+                recon_fname = f"{subject}_{region}_{side}_{end}.png"
+                recon_img_path = os.path.join(save_dir, recon_fname)
+                dic_windows[w_sub].snapshot(recon_img_path, width=1200, height=900)
 
-        image_files.append(init_img_path)
-        image_files.append(recon_img_path)
+                image_files.append(recon_img_path)
 
-        print(f"Saved snapshots for {subject}")
+                print(f"Saved snapshots for {subject}  {w_sub}")
 
     return image_files
 
@@ -367,6 +364,11 @@ def main():
     with open("/neurospin/dico/adufournet/2025_Champollion_Decoder/decoder/reconstruction/region_views.json", "r") as f:
         REGION_VIEWS = json.load(f)
 
+    a = ana.Anatomist()
+    nb_columns = 2
+    block = a.createWindowsBlock(nb_columns)
+    dic_windows = {}
+
     if load_configs(folder_name) is not None:
         region_name, side, loss = load_configs(folder_name)
         plot_ana(recon_dir=folder_name,
@@ -392,16 +394,13 @@ def main():
     if SNAPSHOT:
         snapshot_all(subjects=subjects, side=side, region=region_name, save_dir=SAVEDIR)
 
+    else:
+        qt_app = Qt.QApplication.instance()
+        if qt_app is not None:
+            qt_app.exec_()
+
 
 
 
 if __name__ == "__main__":
-    a = ana.Anatomist()
-    nb_columns = 2
-    block = a.createWindowsBlock(nb_columns)
-    dic_windows = {}
     main()
-
-    qt_app = Qt.QApplication.instance()
-    if qt_app is not None:
-        qt_app.exec_()
