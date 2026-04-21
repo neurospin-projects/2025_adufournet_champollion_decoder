@@ -55,7 +55,9 @@ def load_configs(path: str):
 
     loss = decoder_cfg['loss']
     region_name, mask, side_skeleton = (encoder_cfg['numpy_all']).split('/')[-3:]
-    print(region_name, mask, side_skeleton)
+
+    if verbose:
+        print(region_name, mask, side_skeleton)
     side = side_skeleton[0]
     return region_name, side, loss
 
@@ -165,7 +167,8 @@ def snapshot_all(subjects, side, region, save_dir):
 
                 image_files.append(recon_img_path)
 
-                print(f"Saved snapshots for {subject}  {w_sub}")
+                if verbose:
+                    print(f"Saved snapshots for {subject}  {w_sub}")
 
     return image_files
 
@@ -223,7 +226,8 @@ def get_decoded_files(recon_dir, listsub, n_subjects_to_display):
 
         selected = np.random.choice(len(decoded_files), size=n_subjects_to_display, replace=False)
         decoded_files = [decoded_files[i] for i in selected]
-        print("Randomly selected decoded files:", [os.path.basename(f) for f in decoded_files])
+        if verbose:
+            print("Randomly selected decoded files:", [os.path.basename(f) for f in decoded_files])
 
     return decoded_files
 
@@ -320,7 +324,8 @@ def plot_ana(recon_dir, n_subjects_to_display, loss_name, listsub,
             print(f"ERROR: Input file not found for {subject_id}. Skipping.")
             continue
 
-    print("All subjects loaded and displayed successfully.")
+    if verbose:
+        print("All subjects loaded and displayed successfully.")
 
 
 # ===========================
@@ -338,6 +343,7 @@ def main():
     parser.add_argument('--dataset', type=str, default=None, help='Path to the dataset for fallback')
     parser.add_argument('--snapshot', type=bool, default=False, help='If you want to automaticaly have the snapshots.')
     parser.add_argument('--savedir', type=str, default=False, help='Save directory for the snapshots.')
+    parser.add_argument('--verbose', type=str, default=False, help='Print')
 
     args = parser.parse_args()
     subjects = args.subjects.split(',') if args.subjects else None
@@ -364,10 +370,17 @@ def main():
     with open("/neurospin/dico/adufournet/2025_Champollion_Decoder/decoder/reconstruction/region_views.json", "r") as f:
         REGION_VIEWS = json.load(f)
 
+    global a
+    global nb_columns
+    global block
+    global dic_windows
+    global verbose
+
     a = ana.Anatomist()
     nb_columns = 2
     block = a.createWindowsBlock(nb_columns)
     dic_windows = {}
+    verbose = args.verbose
 
     if load_configs(folder_name) is not None:
         region_name, side, loss = load_configs(folder_name)
@@ -386,10 +399,11 @@ def main():
             listsub=subjects, 
             loss_name='bce',
             crops=args.crops)
-    
-    print(subjects)
-    print(side)
-    print(SAVEDIR)
+        
+    if verbose:
+        print(subjects)
+        print(side)
+        print(SAVEDIR)
 
     if SNAPSHOT:
         snapshot_all(subjects=subjects, side=side, region=region_name, save_dir=SAVEDIR)
