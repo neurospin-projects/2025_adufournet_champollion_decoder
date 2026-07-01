@@ -147,6 +147,7 @@ decodervenv/
 
 # Runs for tensorboard
 runs/
+configs/
 
 # Spyder project settings
 .spyderproject
