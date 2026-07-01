@@ -354,7 +354,7 @@ def main():
         raise FileNotFoundError(f"Provided path not found: {folder_name}")
     
     if folder_name.endswith('/'):
-        folder_name = folder_name.replace('/', '')
+        folder_name = folder_name[:-1]
 
     SNAPSHOT = args.snapshot
     SAVEDIR = args.savedir
