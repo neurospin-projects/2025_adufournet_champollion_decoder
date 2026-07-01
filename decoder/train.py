@@ -139,7 +139,7 @@ def main():
 
     nb_exp = get_next_exp_number(os.path.join(base_out_dir, region))
     experiment_name = f"{region}_{nb_exp}"
-    out_dir = os.path.join(base_out_dir, experiment_name)
+    out_dir = os.path.join(base_out_dir, region, experiment_name)
     
     os.makedirs(out_dir, exist_ok=True)
     print(f"Logging to: {out_dir}")
