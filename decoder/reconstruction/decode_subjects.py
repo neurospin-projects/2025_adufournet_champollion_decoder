@@ -30,11 +30,12 @@ def load_config(config_path):
         return yaml.safe_load(f)
 
 
-def prepare_paths(run_dir):
+def prepare_paths(run_dir, recon_dir=None):
     best_model_path = os.path.join(run_dir, "best_model.pth")
     decoder_config_path = os.path.join(run_dir, ".hydra", "decoder_config.yaml")
     encoder_config_path = os.path.join(run_dir, ".hydra", "encoder_config.yaml")
-    recon_dir = os.path.join(run_dir, "reconstruction_best_model")
+    if recon_dir is None:
+        recon_dir = os.path.join(run_dir, "reconstruction_best_model")
     os.makedirs(recon_dir, exist_ok=True)
 
     return best_model_path, decoder_config_path, encoder_config_path, recon_dir
@@ -144,12 +145,13 @@ def main():
     parser.add_argument("-s", "--subjects", type=str, default=None)
     parser.add_argument("-e", "--embeddings", required=True)
     parser.add_argument("-c", "--IDcolumnName", default="Subject")
+    parser.add_argument("-o", "--output_path", type=str, default=None)
 
     args = parser.parse_args()
 
     # 1️ Prepare paths
     best_model_path, decoder_config_path, encoder_config_path, recon_dir = \
-        prepare_paths(args.path)
+        prepare_paths(args.path, recon_dir=args.output_path)
 
     # 2️ Load configs
     encoder_cfg = load_config(encoder_config_path)

@@ -38,7 +38,7 @@ python3 -m decoder.train
 ## Decoding subjects from a .csv file
 
 If you want to decode subjects, with a known model (already trained), use `decode_subjects.py`.
-`decode_subjects.py` takes as argument the path the the trained model folder (-p), the list of subjects (-s), the path to the embeddings file (-e) and the name of the ID column in the embeddings file (-c):
+`decode_subjects.py` takes as argument the path the the trained model folder (-p), the list of subjects (-s), the path to the embeddings file (-e), the name of the ID column in the embeddings file (-c), and optionally the path where to write reconstructions (-o):
 
 Run (inside the folder `2025_Champollion_Decoder`):
 ```bash
@@ -46,7 +46,8 @@ python3 -m decoder.reconstruction.decode_subjects \
                        -p runs/Champollion_V1_after_ablation_256/23_SC-sylv_left_bce_0.0005 \
                        -s sub-1000021,sub-1000325,sub-1000575,sub-1000606 \
                        -e /neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation_latent_256/SC-sylv_left/name09-39-51_74/ukb40_random_embeddings/full_embeddings.csv \
-                       -c ID
+                       -c ID \
+                       [-o /desired/path/where/to/write/reconstructions/]
 
 ```
 
