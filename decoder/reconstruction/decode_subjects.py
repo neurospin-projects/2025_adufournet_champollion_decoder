@@ -6,7 +6,7 @@ cd 2025_Champollion_Decoder
 
 python3 -m decoder.reconstruction.decode_subjects \
                 -p runs/Champollion_V1_after_ablation_256/57_fronto-parietal_medial_face_left_bce_0.0005 \
-                -s sub-1000021,sub-1000325,sub-1000575,sub-1000606,sub-1000715,sub-1000963 \
+                -s sub-a,sub-b,sub-c,sub-d,sub-1000715,sub-1000963 \
                 -e /neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation_latent_256/fronto-parietal_medial_face_left/name16-13-44_35/ukb40_random_embeddings/train_embeddings.csv \
                 -c ID
 """

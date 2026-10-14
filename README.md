@@ -44,7 +44,7 @@ Run (inside the folder `2025_Champollion_Decoder`):
 ```bash
 python3 -m decoder.reconstruction.decode_subjects \
                        -p runs/Champollion_V1_after_ablation_256/23_SC-sylv_left_bce_0.0005 \
-                       -s sub-1000021,sub-1000325,sub-1000575,sub-1000606 \
+                       -s sub-a,sub-b,sub-c,sub-d \
                        -e /neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation_latent_256/SC-sylv_left/name09-39-51_74/ukb40_random_embeddings/full_embeddings.csv \
                        -c ID \
                        [-o /desired/path/where/to/write/reconstructions/]

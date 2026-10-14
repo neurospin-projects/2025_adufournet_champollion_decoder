@@ -6,7 +6,7 @@ cd 2025_Champollion_Decoder
 
 python3 decoder/reconstruction/visu.py \
   -p decoder/example \
-  -s sub-1110622,sub-1150302
+  -s sub-a,sub-b
 """
 
 import anatomist.api as ana
@@ -336,7 +336,7 @@ def main():
     parser = argparse.ArgumentParser(description="Visualize input vs decoded volumes in Anatomist.")
     parser.add_argument('-p', '--path', type=str, required=True, help="Base folder path to the reconstructions.")
     parser.add_argument('-s', '--subjects', type=str, default=None,
-                        help="Comma-separated list of subject IDs to plot (e.g., sub-1110622,sub-1150302).")
+                        help="Comma-separated list of subject IDs to plot (e.g., sub-a,sub-b).")
     parser.add_argument('-n', '--nsubjects', type=int, default=4, help="Number of subjects to plot.")
     parser.add_argument('-c', '--crops', type=str, default=None, help='Path to the crops of the input data.')
 
